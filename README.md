@@ -107,11 +107,11 @@ The app will be accessible at **`http://localhost:3000`**
 
 ---
 
-## 🎥 Project Demo
-<video width="800" controls>
-  <source src="public/Overview.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
+## 📸 Screenshots
+![Home Page](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot1.png)
+![Student](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot2.png)
+![Admin Dashboard](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot2.png)
+
 
 
 ## 📌 Future Enhancements
