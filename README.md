@@ -1,70 +1,131 @@
-# Getting Started with Create React App
+# MUresourceX
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## 📌 Project Overview
+**MUresourceX** is a web application designed for **Mumbai University engineering students** to access educational resources based on their **branch, semester, and subjects**. The platform also provides an **admin dashboard** where administrators can:
 
-## Available Scripts
+- View **analytics** on uploaded resources.
+- **Upload, edit, delete, and manage** resources.
+- Track subject-wise resource availability.
 
-In the project directory, you can run:
+The frontend is built using **React** with **tsparticles** for interactive UI effects, and the backend is powered by **Node.js**.
 
-### `npm start`
+---
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🚀 Features
+### 🎓 **Student Section**
+✅ Browse and download resources for:
+- Your **engineering branch** (Computer, Mechanical, Civil, etc.).
+- Your **semester** (1st to 8th).
+- Specific **subjects** within the selected semester.
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+### 🔧 **Admin Dashboard**
+✅ **Metrics & Analytics:** View statistics on uploaded resources.
+✅ **CRUD Operations:**
+- **Upload** new study materials.
+- **Edit & update** existing resources.
+- **Delete** outdated or incorrect files.
+✅ **User-friendly interface** for managing resources efficiently.
 
-### `npm test`
+---
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## 🛠️ Tech Stack
+### **Frontend (Client-side)**
+- **React.js** – UI development
+- **Styled Components** – Styling
+- **tsparticles** – Animated background effects
 
-### `npm run build`
+### **Backend (Server-side)**
+- **Node.js** – Backend runtime
+- **Express.js** – API handling
+- **Multer** – File uploads
+- **MongoDB** – Database for storing metadata
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+---
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 📂 Project Structure
+```
+MUresourceX/
+│── client/                  # Frontend (React.js)
+│   ├── src/
+│   │   ├── components/      # UI components
+│   │   ├── pages/           # Page components
+│   │   ├── App.js           # Main React app
+│   │   ├── index.js         # Entry point
+│   ├── public/              # Static assets
+│── server/                  # Backend (Node.js)
+│   ├── models/              # Database models
+│   ├── routes/              # API routes
+│   ├── app.js               # Main server file
+│── uploads/                 # Resource storage
+│── README.md                # Project documentation
+│── package.json             # Dependencies
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+---
 
-### `npm run eject`
+## ⚙️ Installation & Setup
+### **1️⃣ Clone the Repository**
+```sh
+git clone https://github.com/sidharth0909/MUresourceX.git
+cd MUresourceX
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### **2️⃣ Install Dependencies**
+#### **For Frontend**
+```sh
+cd client
+npm install
+```
+#### **For Backend**
+```sh
+cd server
+npm install
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### **3️⃣ Start the Application**
+#### **Run Backend Server**
+```sh
+cd server
+node app.js
+```
+#### **Run Frontend React App**
+```sh
+cd client
+npm start
+```
+The app will be accessible at **`http://localhost:3000`**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+---
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+## 🔗 API Endpoints
+| Method | Endpoint | Description |
+|--------|---------|-------------|
+| `GET` | `/api/resources/:branch/:semester/:subject` | Fetch resources |
+| `POST` | `/api/upload` | Upload new resource |
+| `PUT` | `/api/edit/:id` | Edit resource details |
+| `DELETE` | `/api/delete/:id` | Delete resource |
 
-## Learn More
+---
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## 🎥 Project Demo
+<video width="800" controls>
+  <source src="public/Overview.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
 
-To learn React, check out the [React documentation](https://reactjs.org/).
 
-### Code Splitting
+## 📌 Future Enhancements
+- ✅ Implement **user authentication** for role-based access.
+- ✅ Add **search & filter functionality**.
+- ✅ Improve **real-time analytics** for admin dashboard.
+- ✅ Enable **comments & ratings** on resources.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+---
 
-### Analyzing the Bundle Size
+## 🤝 Contributing
+Contributions are welcome! Feel free to **fork the repository**, create a **new branch**, and submit a **pull request**.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+---
 
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## 📜 License
+This project is licensed under the **MIT License**.
