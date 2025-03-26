@@ -108,9 +108,9 @@ The app will be accessible at **`http://localhost:3000`**
 ---
 
 ## 📸 Screenshots
-![Home Page](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot1.png)
-![Student](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot2.png)
-![Admin Dashboard](https://raw.githubusercontent.com/sidharth0909/MUresourceX/main/client/public/screenshot2.png)
+![Home Page](https://github.com/sidharth0909/MUresourceX/blob/main/public/Home.png)
+![Student](https://github.com/sidharth0909/MUresourceX/blob/main/public/student.png)
+![Admin Dashboard](https://github.com/sidharth0909/MUresourceX/blob/main/public/Admin.png)
 
 
 
