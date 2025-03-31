@@ -529,10 +529,18 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchResources = async () => {
-      const { data } = await supabase.storage
+      const { data, error } = await supabase.storage
         .from('books')
-        .list('', { limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } });
-      setResources(data || []);
+        .list('', { 
+          limit: 100, 
+          offset: 0, 
+          sortBy: { column: 'name', order: 'asc' },
+          getMetadata: true // Include metadata in response
+        });
+
+      if (!error) {
+        setResources(data || []);
+      }
     };
     fetchResources();
   }, []);
@@ -541,7 +549,13 @@ const AdminDashboard = () => {
     e.preventDefault();
     if (!file || !branch || !semester || !subject) return;
 
-    // Sanitize all path components
+    const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    setMessage("Please sign in first!");
+    return;
+  }
+
+
     const cleanBranch = branch.toLowerCase().replace(/\s+/g, '-');
     const cleanSemester = `semester-${semester}`;
     const cleanSubject = subject.toLowerCase().replace(/\s+/g, '-');
@@ -553,9 +567,9 @@ const AdminDashboard = () => {
       .from('books')
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: true,
+        upsert: false,
         contentType: file.type,
-        metadata: { 
+        customMetadata: { // Changed from metadata to customMetadata
           branch: branch,
           semester: semester,
           subject: subject
@@ -565,22 +579,26 @@ const AdminDashboard = () => {
     if (error) {
       setMessage(`Upload failed: ${error.message}`);
     } else {
+      // Refresh resources with metadata
       const { data } = await supabase.storage
         .from('books')
-        .list('', { limit: 100 });
-      setResources(data);
+        .list('', { 
+          limit: 100,
+          getMetadata: true // Include metadata in refresh
+        });
+      setResources(data || []);
       setMessage("File uploaded successfully!");
+      setTimeout(() => setMessage(""), 3000);
     }
   };
 
-
-  const handleDelete = async (fileName) => {
+  const handleDelete = async (filePath) => { // Changed to use full path
     const { error } = await supabase.storage
       .from('books')
-      .remove([fileName]);
+      .remove([filePath]);
 
     if (!error) {
-      setResources(resources.filter(r => r.name !== fileName));
+      setResources(resources.filter(r => r.name !== filePath));
       setMessage("Resource deleted!");
       setTimeout(() => setMessage(""), 3000);
     }
@@ -591,17 +609,69 @@ const AdminDashboard = () => {
     setShowModal(true);
   };
 
-  const handleUpdate = (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    setResources(
-      resources.map((res) =>
-        res.id === editingResource.id ? editingResource : res
-      )
-    );
+    if (!editingResource) return;
+  
+    const oldPath = editingResource.name;
+    const { data: fileBlob, error: downloadError } = await supabase.storage
+      .from('books')
+      .download(oldPath);
+  
+    if (downloadError) {
+      setMessage("Failed to download file for update.");
+      return;
+    }
+  
+    const newBranch = editingResource.metadata.customMetadata.branch;
+    const newSemester = editingResource.metadata.customMetadata.semester;
+    const newSubject = editingResource.metadata.customMetadata.subject;
+  
+    // Construct new path
+    const cleanBranch = newBranch.toLowerCase().replace(/\s+/g, '-');
+    const cleanSemester = `semester-${newSemester}`;
+    const cleanSubject = newSubject.toLowerCase().replace(/\s+/g, '-');
+    const fileName = oldPath.split('/').pop();
+    const newPath = `${cleanBranch}/${cleanSemester}/${cleanSubject}/${fileName}`;
+  
+    // Upload to new path with new metadata
+    const { error: uploadError } = await supabase.storage
+      .from('books')
+      .upload(newPath, fileBlob, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: fileBlob.type,
+        customMetadata: {
+          branch: newBranch,
+          semester: newSemester,
+          subject: newSubject
+        }
+      });
+  
+    if (uploadError) {
+      setMessage(`Update failed: ${uploadError.message}`);
+      return;
+    }
+  
+    // Delete old file
+    const { error: deleteError } = await supabase.storage
+      .from('books')
+      .remove([oldPath]);
+  
+    if (deleteError) {
+      setMessage(`Failed to delete old file: ${deleteError.message}`);
+      return;
+    }
+  
+    // Refresh resources
+    const { data } = await supabase.storage
+      .from('books')
+      .list('', { getMetadata: true });
+    setResources(data || []);
     setShowModal(false);
-    setMessage("Resource updated!");
-    setTimeout(() => setMessage(""), 3000);
+    setMessage("Resource updated successfully!");
   };
+
 
   return (
     <Container>
@@ -616,10 +686,17 @@ const AdminDashboard = () => {
       <DashboardContainer>
         <h2>Admin Dashboard</h2>
         {message && (
-          <div style={{ color: "#00ff88", marginBottom: "1rem" }}>
-            {message}
-          </div>
-        )}
+  <div style={{
+    color: message.includes("successfully") ? "#00ff88" : "#ff4444",
+    marginBottom: "1rem",
+    padding: "1rem",
+    background: "rgba(0, 0, 0, 0.3)",
+    borderRadius: "8px",
+    display: "inline-block"
+  }}>
+    {message}
+  </div>
+)}
 
         <MetricsGrid>
           <ChartCard>
@@ -713,10 +790,19 @@ const AdminDashboard = () => {
             <tbody>
     {resources.map((resource) => (
       <tr key={resource.name}>
-        <td>{resource.name}</td>
-        <td>{resource.metadata?.branch}</td>
-        <td>Semester {resource.metadata?.semester}</td>
-        <td>{resource.metadata?.subject}</td>
+        <td>{resource.name.split('/').pop()}</td> {/* Display filename only */}
+        <td>{resource.metadata?.customMetadata?.branch}</td>
+        <td>Semester {resource.metadata?.customMetadata?.semester}</td>
+        <td>{resource.metadata?.customMetadata?.subject}</td>
+        <td>
+        {new Date(resource.created_at).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}
+      </td>
         <td>
           <ActionButton onClick={() => handleEdit(resource)}>
             <Edit />
@@ -738,61 +824,79 @@ const AdminDashboard = () => {
               <label>
                 Branch:
                 <select
-                  value={editingResource.branch}
+                  value={editingResource.metadata?.customMetadata?.branch || ''}
                   onChange={(e) =>
                     setEditingResource({
                       ...editingResource,
-                      branch: e.target.value,
+                      metadata: {
+                        ...editingResource.metadata,
+                        customMetadata: {
+                          ...editingResource.metadata.customMetadata,
+                          branch: e.target.value,
+                        },
+                      },
                     })
                   }
-                >
+                >        
                   {Object.keys(subjectsData).map((branch) => (
-                    <option key={branch} value={branch}>
-                      {branch}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <option key={branch} value={branch}>
+              {branch}
+            </option>
+          ))}
+        </select>
+      </label>
 
-              <label>
-                Semester:
-                <select
-                  value={editingResource.semester}
-                  onChange={(e) =>
-                    setEditingResource({
-                      ...editingResource,
-                      semester: e.target.value,
-                    })
-                  }
-                >
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                    <option key={num} value={num}>
-                      Semester {num}
-                    </option>
-                  ))}
-                </select>
-              </label>
+      <label>
+        Semester:
+        <select
+          value={editingResource.metadata?.customMetadata?.semester || ''}
+          onChange={(e) =>
+            setEditingResource({
+              ...editingResource,
+              metadata: {
+                ...editingResource.metadata,
+                customMetadata: {
+                  ...editingResource.metadata.customMetadata,
+                  semester: e.target.value,
+                },
+              },
+            })
+          }
+        >
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+            <option key={num} value={num}>
+              Semester {num}
+            </option>
+          ))}
+        </select>
+      </label>
 
-              <label>
-                Subject:
-                <select
-                  value={editingResource.subject}
-                  onChange={(e) =>
-                    setEditingResource({
-                      ...editingResource,
-                      subject: e.target.value,
-                    })
-                  }
-                >
-                  {subjectsData[editingResource.branch][
-                    editingResource.semester
-                  ].map((sub) => (
-                    <option key={sub} value={sub}>
-                      {sub}
-                    </option>
-                  ))}
-                </select>
-              </label>
+      <label>
+        Subject:
+        <select
+          value={editingResource.metadata?.customMetadata?.subject || ''}
+          onChange={(e) =>
+            setEditingResource({
+              ...editingResource,
+              metadata: {
+                ...editingResource.metadata,
+                customMetadata: {
+                  ...editingResource.metadata.customMetadata,
+                  subject: e.target.value,
+                },
+              },
+            })
+          }
+        >
+          {subjectsData[editingResource.metadata?.customMetadata?.branch]?.[
+            editingResource.metadata?.customMetadata?.semester
+          ]?.map((sub) => (
+            <option key={sub} value={sub}>
+              {sub}
+            </option>
+          ))}
+        </select>
+      </label>
 
               <div>
                 <UploadButton type="submit">Save Changes</UploadButton>
