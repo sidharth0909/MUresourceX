@@ -7,6 +7,7 @@ import { Line, Pie } from "react-chartjs-2";
 import { Chart, registerables } from "chart.js";
 import { Delete, Edit } from "@mui/icons-material";
 import { useMemo } from "react";
+import { supabase, getResourcePath } from "../supabase";
 
 Chart.register(...registerables);
 
@@ -35,10 +36,12 @@ const MetricsGrid = styled.div`
 `;
 
 const ChartCard = styled.div`
-  background: rgba(255, 255, 255, 0.1);
+  background:  ${({ theme }) => theme.cardBg};
   padding: 1.5rem;
   border-radius: 10px;
   backdrop-filter: blur(10px);
+  color: ${({ theme }) => theme.text};
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   position: relative;
   min-height: 300px;
 
@@ -439,7 +442,8 @@ const subjectsData = {
 };
 
 const AdminDashboard = () => {
-  const [resources, setResources] = useState(initialResources);
+  const [resources, setResources] = useState([]);
+  const [recentUploads, setRecentUploads] = useState([]);
   const [branch, setBranch] = useState("Computer Engineering");
   const [semester, setSemester] = useState("1");
   const [subject, setSubject] = useState("");
@@ -513,9 +517,8 @@ const AdminDashboard = () => {
 
   // Metrics calculations
   const totalResources = resources.length;
-  const recentUploads = resources.slice(-5).reverse();
-  const computerResources = resources.filter(
-    (r) => r.branch === "Computer Engineering"
+  const computerResources = resources.filter(r => 
+    r.metadata?.branch === 'Computer Engineering'
   ).length;
 
   const particlesInit = useCallback(async (engine) => {
@@ -524,51 +527,63 @@ const AdminDashboard = () => {
 
   const subjects = subjectsData[branch][semester] || [];
 
+  useEffect(() => {
+    const fetchResources = async () => {
+      const { data } = await supabase.storage
+        .from('books')
+        .list('', { limit: 100, offset: 0, sortBy: { column: 'name', order: 'asc' } });
+      setResources(data || []);
+    };
+    fetchResources();
+  }, []);
+
   const handleUpload = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
+    if (!file || !branch || !semester || !subject) return;
 
-    formData.append("branch", branch);
-    formData.append("semester", semester);
-    formData.append("subject", subject);
-    formData.append("file", file);
+    // Sanitize all path components
+    const cleanBranch = branch.toLowerCase().replace(/\s+/g, '-');
+    const cleanSemester = `semester-${semester}`;
+    const cleanSubject = subject.toLowerCase().replace(/\s+/g, '-');
+    const cleanFileName = file.name.toLowerCase().replace(/\s+/g, '-');
 
-    try {
-      const response = await fetch("http://localhost:5000/api/upload", {
-        method: "POST",
-        body: formData,
+    const filePath = `${cleanBranch}/${cleanSemester}/${cleanSubject}/${cleanFileName}`;
+
+    const { error } = await supabase.storage
+      .from('books')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+        contentType: file.type,
+        metadata: { 
+          branch: branch,
+          semester: semester,
+          subject: subject
+        }
       });
 
-      const data = await response.json();
-      if (data.success) {
-        const newResource = {
-          id: Date.now().toString(),
-          branch,
-          semester,
-          subject,
-          fileName: file.name,
-          fileSize: `${(file.size / 1024 / 1024).toFixed(1)} MB`,
-          uploadDate: new Date().toISOString().split("T")[0],
-          uploadTime: new Date().toLocaleTimeString(),
-        };
-        setResources([...resources, newResource]);
-        setMessage("File uploaded successfully!");
-        setTimeout(() => setMessage(""), 3000);
-        setFile(null);
-        setSubject("");
-      } else {
-        setMessage("Upload failed");
-      }
-    } catch (err) {
-      console.error("Server error:", err);
-      setMessage("Upload failed");
+    if (error) {
+      setMessage(`Upload failed: ${error.message}`);
+    } else {
+      const { data } = await supabase.storage
+        .from('books')
+        .list('', { limit: 100 });
+      setResources(data);
+      setMessage("File uploaded successfully!");
     }
   };
 
-  const handleDelete = (id) => {
-    setResources(resources.filter((resource) => resource.id !== id));
-    setMessage("Resource deleted!");
-    setTimeout(() => setMessage(""), 3000);
+
+  const handleDelete = async (fileName) => {
+    const { error } = await supabase.storage
+      .from('books')
+      .remove([fileName]);
+
+    if (!error) {
+      setResources(resources.filter(r => r.name !== fileName));
+      setMessage("Resource deleted!");
+      setTimeout(() => setMessage(""), 3000);
+    }
   };
 
   const handleEdit = (resource) => {
@@ -696,26 +711,23 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {resources.map((resource) => (
-                <tr key={resource.id}>
-                  <td>{resource.fileName}</td>
-                  <td>{resource.branch}</td>
-                  <td>Semester {resource.semester}</td>
-                  <td>{resource.subject}</td>
-                  <td>
-                    {resource.uploadDate} {resource.uploadTime}
-                  </td>
-                  <td>
-                    <ActionButton onClick={() => handleEdit(resource)}>
-                      <Edit />
-                    </ActionButton>
-                    <ActionButton onClick={() => handleDelete(resource.id)}>
-                      <Delete />
-                    </ActionButton>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
+    {resources.map((resource) => (
+      <tr key={resource.name}>
+        <td>{resource.name}</td>
+        <td>{resource.metadata?.branch}</td>
+        <td>Semester {resource.metadata?.semester}</td>
+        <td>{resource.metadata?.subject}</td>
+        <td>
+          <ActionButton onClick={() => handleEdit(resource)}>
+            <Edit />
+          </ActionButton>
+          <ActionButton onClick={() => handleDelete(resource.name)}>
+            <Delete />
+          </ActionButton>
+        </td>
+      </tr>
+    ))}
+  </tbody>
           </Table>
         </DataTable>
 

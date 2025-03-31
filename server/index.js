@@ -168,5 +168,5 @@ app.get('/api/subjects/:branch/:semester', (req, res) => {
 });
 
 // Start the Server
-const PORT = 5000;
+const PORT = 5001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Particles from 'react-tsparticles';
 import { loadSlim } from 'tsparticles-slim';
 import styled from 'styled-components';
+import { supabase } from '../supabase';
 
 const Container = styled.div`
   background: radial-gradient(ellipse at bottom, #1a1a2e 0%, #000000 100%);
@@ -116,19 +117,15 @@ const AdminLogin = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch('http://localhost:5000/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       });
-      const data = await response.json();
-      if (data.success) {
-        navigate('/admin/dashboard');
-      } else {
-        setError('Invalid credentials');
-      }
+
+      if (error) throw error;
+      navigate('/admin/dashboard');
     } catch (err) {
-      setError('Server error');
+      setError(err.message);
     }
   };
 

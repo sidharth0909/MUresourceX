@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
 import PDFViewer from "./PDFViewer";
+import { supabase, getResourcePath } from "../supabase";
 
 const Container = styled.div`
   display: flex;
@@ -99,26 +100,45 @@ const ResourceList = ({ branch, semester, subject }) => {
 
   useEffect(() => {
     const fetchResources = async () => {
-      const response = await fetch(
-        `http://localhost:5000/api/resources/${branch}/${semester}/${subject}`
-      );
-      const data = await response.json();
-      setResources(data);
+      const cleanBranch = branch.replace(/\s+/g, '-').toLowerCase();
+      const cleanSemester = `semester-${semester}`;
+      const cleanSubject = subject.replace(/\s+/g, '-').toLowerCase();
+  
+      const { data } = await supabase.storage
+        .from('books')
+        .list(`${cleanBranch}/${cleanSemester}/${cleanSubject}`);
+  
+      setResources(data || []);
     };
-    fetchResources();
+    
+    if (branch && semester && subject) fetchResources();
   }, [branch, semester, subject]);
+  
+  const getFileUrl = (fileName) => 
+    supabase.storage
+      .from('books')
+      .getPublicUrl(
+        `${branch.replace(/\s+/g, '-').toLowerCase()}/` +
+        `semester-${semester}/` + // This matches upload format
+        `${subject.replace(/\s+/g, '-').toLowerCase()}/` +
+        fileName
+      ).data.publicUrl;
 
   return (
     <Container>
       {resources.map((resource) => (
-        <Card key={resource.id}>
+        <Card key={resource.name}>
           <Preview onClick={() => setSelectedPdf(resource)}>
             {resource.name.endsWith(".pdf") ? (
               <>
-                <PDFFrame
-                  src={`http://localhost:5000/uploads/${branch}/${semester}/${subject}/${resource.name}#toolbar=0`}
-                  title={resource.name}
-                />
+<PDFFrame
+  src={`${getFileUrl(resource.name)}#toolbar=0&view=fitH`}
+  title={resource.name}
+  onError={(e) => {
+    console.error('PDF load error:', e);
+    setSelectedPdf(null);
+  }}
+/>
                 <PDFOverlay>
                   <span>Click to View</span>
                 </PDFOverlay>
@@ -129,7 +149,7 @@ const ResourceList = ({ branch, semester, subject }) => {
           </Preview>
           <FileName>{resource.name}</FileName>
           <DownloadButton
-            href={`http://localhost:5000/uploads/${branch}/${semester}/${subject}/${resource.name}`}
+            href={getFileUrl(resource.name)}
             download
           >
             Download
@@ -138,7 +158,7 @@ const ResourceList = ({ branch, semester, subject }) => {
       ))}
       {selectedPdf && (
         <PDFViewer
-          file={`http://localhost:5000/uploads/${branch}/${semester}/${subject}/${selectedPdf.name}`}
+          file={getFileUrl(selectedPdf.name)}
           onClose={() => setSelectedPdf(null)}
         />
       )}

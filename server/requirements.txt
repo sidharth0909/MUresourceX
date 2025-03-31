@@ -1,0 +1,4 @@
+google-generativeai>=0.3.0
+pdfminer.six>=20221105
+Flask-Cors==3.0.10
+python-dotenv==0.19.2

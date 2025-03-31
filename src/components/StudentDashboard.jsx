@@ -7,13 +7,8 @@ import SubjectSelector from './SubjectSelector';
 import ResourceList from './ResourceList';
 import Particles from 'react-tsparticles';
 import { loadSlim } from "tsparticles-slim";
-import styled, { keyframes } from 'styled-components';
-
-const cursorPull = keyframes`
-  0% { transform: translate(-50%, -50%) scale(1); }
-  50% { transform: translate(-50%, -50%) scale(1.2); }
-  100% { transform: translate(-50%, -50%) scale(1); }
-`;
+import styled from 'styled-components';
+import ChatBot from './Chatbot';
 
 const Container = styled.div`
   background: radial-gradient(ellipse at bottom, #1a1a2e 0%, #000000 100%);
@@ -21,24 +16,6 @@ const Container = styled.div`
   color: #fff;
   position: relative;
   overflow: hidden;
-  cursor: none;
-  
-  &:hover .cursor-trail {
-    opacity: 1;
-  }
-`;
-
-const CursorTrail = styled.div`
-  position: fixed;
-  pointer-events: none;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #00ff88;
-  border-radius: 50%;
-  animation: ${cursorPull} 2s infinite;
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: 9999;
 `;
 
 const Content = styled.div`
@@ -53,7 +30,6 @@ const StudentDashboard = () => {
     const [selectedBranch, setBranch] = useState(null);
     const [selectedSemester, setSemester] = useState(null);
     const [selectedSubject, setSubject] = useState(null);
-    const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
     const particlesRef = useRef(null);
     const attractorRefs = useRef([]);
 
@@ -61,71 +37,55 @@ const StudentDashboard = () => {
         await loadSlim(engine);
     }, []);
 
-    useEffect(() => {
-        const updateCursorPosition = (e) => {
-            setCursorPos({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener('mousemove', updateCursorPosition);
-        return () => window.removeEventListener('mousemove', updateCursorPosition);
-    }, []);
-
     const particlesOptions = {
-    particles: {
-        number: { value: 60 }, // Slightly reduced number for better performance
-        color: { value: "#00ff88" },
-        opacity: { value: 0.7 },
-        size: { value: 1 },
-        links: {
-            enable: true,
-            distance: 200, // Increased link distance
-            color: "#00ff88",
-            opacity: 0.3,
-            width: 1
-        },
-        move: {
-            enable: true,
-            speed: 5, // Increased general movement speed
-            direction: "none",
-            outModes: "bounce",
-            attract: {
+        particles: {
+            number: { value: 60 },
+            color: { value: "#00ff88" },
+            opacity: { value: 0.7 },
+            size: { value: 1 },
+            links: {
                 enable: true,
-                rotateX: 1000, // Stronger rotation forces
-                rotateY: 2000
-            }
-        }
-    },
-    interactivity: {
-        events: {
-            onHover: {
+                distance: 200,
+                color: "#00ff88",
+                opacity: 0.3,
+                width: 1
+            },
+            move: {
                 enable: true,
-                mode: "attract",
-                parallax: { enable: false, force: 60 }
+                speed: 5,
+                direction: "none",
+                outModes: "bounce",
+                attract: {
+                    enable: false, // Disable default attraction
+                    rotateX: 0,
+                    rotateY: 0
+                }
             }
         },
-        modes: {
-            attract: {
-                distance: 400, // Larger attraction radius
-                duration: 0.1, // Faster attraction response
-                speed: 5, // Stronger attraction force
-                targets: [
-                    { type: "cursor", position: "cursor" },
-                    { selector: ".attractor", position: "attractor" }
-                ]
+        interactivity: {
+            events: {
+                onHover: {
+                    enable: true,
+                    mode: "repulse",
+                }
+            },
+            modes: {
+                repulse: {
+                    distance: 200,
+                    duration: 0.4,
+                    speed: 3,
+                    factor: 1,
+                    targets: [
+                        { type: "cursor", position: "cursor" },
+                        { selector: ".attractor", position: "attractor" }
+                    ]
+                }
             }
         }
-    }
     };
 
     return (
         <Container>
-            <CursorTrail 
-                className="cursor-trail" 
-                style={{ 
-                    left: `${cursorPos.x}px`,
-                    top: `${cursorPos.y}px`
-                }} 
-            />
-            
             <Particles
                 id="tsparticles"
                 init={particlesInit}
@@ -134,7 +94,7 @@ const StudentDashboard = () => {
                 style={{ position: 'absolute' }}
             />
             
-            {/* Add attractor points to navigation elements */}
+            {/* Attractor points (now acting as repulsors) */}
             <div className="attractor" ref={el => attractorRefs.current[0] = el} 
                 style={{ position: 'absolute', left: '50%', top: '80px' }} />
             <div className="attractor" ref={el => attractorRefs.current[1] = el} 
@@ -165,6 +125,7 @@ const StudentDashboard = () => {
                     )}
                 </div>
             </Content>
+            {/* <ChatBot /> Chatbot component */}
         </Container>
     );
 };

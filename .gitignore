@@ -22,6 +22,7 @@ dist/
 *.egg-info/
 .coverage
 htmlcov/
+server/uploads
 
 # Environment files
 .env.local

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import { FiUser, FiLogIn, FiMenu, FiX } from 'react-icons/fi';
+import { FiUser, FiLogIn, FiMessageSquare } from 'react-icons/fi';
+import { IconButton, useMediaQuery } from '@mui/material';
 
 const Nav = styled.nav`
   background: rgba(10, 10, 10, 0.8);
@@ -29,32 +30,10 @@ const Logo = styled.div`
   }
 `;
 
-const MenuIcon = styled.div`
-  display: none;
-  cursor: pointer;
-  font-size: 1.8rem;
-
-  @media (max-width: 768px) {
-    display: block;
-  }
-`;
-
 const Links = styled.div`
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    width: 100%;
-    background: rgba(10, 10, 10, 0.9);
-    backdrop-filter: blur(10px);
-    padding: 1rem;
-    display: ${({ open }) => (open ? 'flex' : 'none')};
-  }
 `;
 
 const NavLink = styled.span`
@@ -72,23 +51,39 @@ const NavLink = styled.span`
   }
 `;
 
+const ActionIcons = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 1rem;
+`;
+
 const Navbar = () => {
   const navigate = useNavigate();
-  const [menuOpen, setMenuOpen] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 768px)');
 
   return (
     <Nav>
       <Logo onClick={() => navigate('/')}>MUResourceX</Logo>
-      <MenuIcon onClick={() => setMenuOpen(!menuOpen)}>
-        {menuOpen ? <FiX /> : <FiMenu />}
-      </MenuIcon>
-      <Links open={menuOpen}>
-        <NavLink onClick={() => { setMenuOpen(false); navigate('/student'); }}>
-          <FiUser /> Student
+
+      <Links>
+        <NavLink onClick={() => navigate('/student')}>
+          <FiUser /> {!isMobile && 'Student'}
         </NavLink>
-        <NavLink onClick={() => { setMenuOpen(false); navigate('/admin'); }}>
-          <FiLogIn /> Admin
+        <NavLink onClick={() => navigate('/admin')}>
+          <FiLogIn /> {!isMobile && 'Admin'}
         </NavLink>
+
+        {/* <ActionIcons>
+          <IconButton 
+            onClick={() => navigate('/chat')} // ✅ Navigate to the chat page
+            style={{ color: '#00ff88' }}
+            aria-label="PDF Chat"
+            size="small"
+          >
+            <FiMessageSquare />
+          </IconButton>
+        </ActionIcons> */}
       </Links>
     </Nav>
   );
