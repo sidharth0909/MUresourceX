@@ -1,1 +1,36 @@
 node_modules
+dist
+package-lock.json
+yarn.lock
+coverage
+*.log
+*.tsbuildinfo
+*.tgz
+
+# Local env files
+.env    
+.env.*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Log files
+npm-debug.log*
+yarn-debug.log*
+
+pnpm-debug.log*
+
+# IDEs and editors
+.vscode         # VSCode settings
+.idea          # JetBrains IDEs                                 
+*.sublime-project  # Sublime Text project files
+*.sublime-workspace # Sublime Text workspace files          
+*.code-workspace # VSCode workspace files
+*.swp           # Vim swap files                
+*.swo           # Vim swap files            
+
+
+
+# macOS
+.DS_Store      # macOS Finder files     
